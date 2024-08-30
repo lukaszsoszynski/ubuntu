@@ -21,7 +21,7 @@ autoinstall:
         type: disk
         preserve: true
         match:
-          - serial: "4C531001381012119133"
+          - size: "largest"
       - id: part_ssd_efi
         type: partition
         preserve: true
