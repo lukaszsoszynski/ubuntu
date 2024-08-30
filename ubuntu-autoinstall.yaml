@@ -1,0 +1,104 @@
+---
+autoinstall:
+  version: 1
+  interactive-sections:
+    - identity
+    - network
+  refresh-installer:
+    update: true
+  keyboard:
+    layout: pl
+  codecs:
+    install: false
+  drivers:
+    install: true
+  storage:
+    version: 1
+    swap:
+      size: 0
+    config:
+      - id: disk_ssd
+        type: disk
+        preserve: true
+        match:
+          - serial: "4C531001381012119133"
+      - id: part_ssd_efi
+        type: partition
+        preserve: true
+        size: 100M
+        device: disk_ssd
+        flag: boot
+        grub_device: true
+        partition_name: esp
+      - id: part_ssd_grub
+        type: partition
+        preserve: true
+        size: 3GB
+        device: disk_ssd
+        partition_name: boot
+      - id: luks_ssd
+        type: dm_crypt
+        preserve: true
+        volume: part_ssd_data
+        dm_name: cryptdata
+        key: remove this later
+      - id: vg_ssd
+        type: lvm_volgroup
+        preserve: true
+        name: ssd
+        devices:
+          - luks_ssd
+      - id: vol_system
+        type: lvm_partition
+        preserve: true
+        volgroup: vg_ssd
+        name: system
+        size: -1
+      - id: fs_efi
+        type: format
+        preserve: true
+        volume: part_ssd_efi
+        fstype: fat32
+        label: esp
+      - id: fs_grub
+        type: format
+        preserve: false
+        volume: part_ssd_grub
+        fstype: ext4
+        label: boot
+      - id: fs_system
+        type: format
+        preserve: true
+        volume: vol_system
+        fstype: btrfs
+        label: system
+      - id: mount_efi
+        type: mount
+        device: fs_efi
+        fstype: vfat
+        path: /boot/efi
+        options: umask=0077
+      - id: mount_grub
+        type: mount
+        device: fs_grub
+        fstype: vfat
+        path: /boot
+        options: defaults,noatime
+      - id: mount_system
+        type: mount
+        spec: /dev/mapper/ssd-system
+        device: fs_system
+        path: /
+        options: defaults,noatime,ssd,compress=zstd,discard=async,subvol=@
+      - id: mount_data
+        type: mount
+        device: fs_system
+        spec: /dev/mapper/ssd-system
+        path: /home
+        options: defaults,noatime,ssd,discard=async,subvol=@home
+      - id: mount_opt
+        type: mount
+        device: fs_system
+        spec: /dev/mapper/ssd-system
+        path: /opt
+        options: defaults,noatime,compress=zstd,ssd,discard=async,subvol=@opt
